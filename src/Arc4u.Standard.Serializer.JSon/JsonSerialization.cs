@@ -1,66 +1,59 @@
-﻿using Arc4u.Diagnostics;
-using System;
+﻿using System;
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 
 namespace Arc4u.Serializer
 {
     public class JsonSerialization : IObjectSerialization
     {
+        private const string SerializerTypeTagName = "SerializerType";
+        private const string SerializerTypeTagValue = "Json";
+
+        private void SetCurrentActiviySerializerType()
+            => Activity.Current?.SetTag(SerializerTypeTagName, SerializerTypeTagValue);
+
         public byte[] Serialize<T>(T value)
         {
-            Activity.Current?.SetTag("SerializerType", "Json");
-
-            string json = String.Empty;
-
-            switch (value)
+            SetCurrentActiviySerializerType();
+            if (value is TimeSpan timeSpan)
             {
-                case TimeSpan ts:
-                    json = JsonSerializer.Serialize(ts.Ticks);
-                    break;
-                default:
-                    json = JsonSerializer.Serialize(value);
-                    break;
+                return JsonSerializer.SerializeToUtf8Bytes(timeSpan.Ticks);
             }
 
-            return UTF8Encoding.UTF8.GetBytes(json);
-
+            return JsonSerializer.SerializeToUtf8Bytes(value);
         }
 
         public T Deserialize<T>(byte[] data)
         {
-            Activity.Current?.SetTag("SerializerType", "Json");
-
-            var json = UTF8Encoding.UTF8.GetString(data);
-
-            var typo = typeof(T);
-            var type = IsNullable(typo) ? Nullable.GetUnderlyingType(typo).Name : typo.Name;
-            switch (type)
+            SetCurrentActiviySerializerType();
+            var objectType = typeof(T);
+            if (objectType == typeof(TimeSpan?))
             {
-                case "TimeSpan":
-                    long? ticks = JsonSerializer.Deserialize<long?>(json);
-                    return ticks.HasValue ? (T)(object)new TimeSpan(ticks.Value) : default(T);
-                default:
-                    return JsonSerializer.Deserialize<T>(json);
+                long? ticks = JsonSerializer.Deserialize<long?>(data);
+                return ticks.HasValue ? (T) (new TimeSpan(ticks.Value) as object) : default;
             }
-        }
+            else if (objectType == typeof(TimeSpan))
+            {
+                return (T) (new TimeSpan(JsonSerializer.Deserialize<long>(data)) as object);
+            }
 
-        private bool IsNullable(Type type) => Nullable.GetUnderlyingType(type) != null;
+            return JsonSerializer.Deserialize<T>(data);
+        }
 
         public object Deserialize(byte[] data, Type objectType)
         {
-            var json = UTF8Encoding.UTF8.GetString(data);
-
-            var type = IsNullable(objectType) ? Nullable.GetUnderlyingType(objectType).Name : objectType.Name;
-            switch (type)
+            SetCurrentActiviySerializerType();
+            if (objectType == typeof(TimeSpan?))
             {
-                case "TimeSpan":
-                    long? ticks = JsonSerializer.Deserialize<long?>(json);
-                    return ticks.HasValue ? (object)new TimeSpan(ticks.Value) : null;
-                default:
-                    return JsonSerializer.Deserialize(json, objectType);
+                long? ticks = JsonSerializer.Deserialize<long?>(data);
+                return ticks.HasValue ? new TimeSpan(ticks.Value) : null;
             }
+            else if (objectType == typeof(TimeSpan))
+            {
+                return new TimeSpan(JsonSerializer.Deserialize<long>(data));
+            }
+
+            return JsonSerializer.Deserialize(data, objectType);
         }
     }
 }
