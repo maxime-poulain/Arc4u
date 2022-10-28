@@ -33,6 +33,7 @@ namespace Arc4u.Serializer
         public JsonZipSerialization(System.Text.Json.Serialization.JsonSerializerContext context)
             : base(context)
         {
+            // Test Comment
         }
 
         /// <summary>
