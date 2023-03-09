@@ -4,7 +4,6 @@ using Xunit;
 using Arc4u.Security.Cryptography;
 using FluentAssertions;
 using System.Security.Cryptography.X509Certificates;
-using System.Net.WebSockets;
 
 namespace Arc4u.Standard.UnitTest.Security;
 
@@ -20,7 +19,7 @@ public class CertificateTests
     private readonly Fixture _fixture;
 
     [Fact]
-    public void FileCertificateShouldBe()
+    public void decrypting_a_encrypted_plain_text_returns_the_original_plain_text()
     {
         //arrange
         var publicCert = @".\Configs\cert.pem";
@@ -32,6 +31,24 @@ public class CertificateTests
         var cypherText = certificate.Encrypt(plainText);
         var sut = certificate.Decrypt(cypherText);
 
+        // assert
+        certificate.Should().NotBeNull();
+        sut.Should().Be(plainText);
+    }
+
+    [Fact]
+    public void decrypting_with_manager_class_a_encrypted_plain_text_returns_the_original_plain_text()
+    {
+        // Arrange
+        var publicCert = @".\Configs\cert.pem";
+        var privateCert = @".\Configs\key.pem";
+        var plainText = "FileCertificateShouldBe()";
+        var manager = new CertificateManager();
+
+        // act
+        var certificate = X509Certificate2.CreateFromPemFile(publicCert, privateCert);
+        var cypherText = manager.Encrypt(certificate, plainText);
+        var sut = manager.Decrypt(certificate, cypherText);
 
         // assert
         certificate.Should().NotBeNull();
