@@ -6,7 +6,7 @@ namespace Arc4u.Security.Cryptography;
 
 public static class Certificate
 {
-    private static readonly Lazy<CertificateManager> Instance = new(() => new CertificateManager());
+    private static readonly Lazy<ICertificateManager> Instance = new(() => new CertificateManager());
 
     public static X509Certificate2 FindCertificate(string find, X509FindType findType = X509FindType.FindBySubjectName, StoreLocation location = StoreLocation.LocalMachine, StoreName name = StoreName.My)
         => Instance.Value.FindCertificate(find, findType, location, name);

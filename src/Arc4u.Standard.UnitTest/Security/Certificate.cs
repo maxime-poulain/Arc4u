@@ -21,7 +21,7 @@ public class CertificateTests
     [Fact]
     public void decrypting_a_encrypted_plain_text_returns_the_original_plain_text()
     {
-        //arrange
+        // arrange
         var publicCert = @".\Configs\cert.pem";
         var privateCert = @".\Configs\key.pem";
         var plainText = "FileCertificateShouldBe()";
